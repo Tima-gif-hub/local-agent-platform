@@ -1,0 +1,15 @@
+[workspace]
+members = [
+    "app/src-tauri",
+    "crates/jarvis-types",
+    "crates/jarvis-router",
+    "crates/jarvis-skills",
+    "crates/jarvis-store",
+    "crates/jarvis-llm",
+]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/timapogorelov/local-agent-platform"

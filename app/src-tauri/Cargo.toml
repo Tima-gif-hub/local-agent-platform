@@ -1,0 +1,14 @@
+[package]
+name = "jarvis"
+version = "0.1.0"
+description = "Jarvis desktop host"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-global-shortcut = "2"
