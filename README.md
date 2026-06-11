@@ -1,5 +1,9 @@
 # Jarvis
 
+[![CI](https://github.com/timapogorelov/local-agent-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/timapogorelov/local-agent-platform/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Status: pre-MVP](https://img.shields.io/badge/status-pre--MVP-orange)
+
 **Local-first desktop AI assistant that turns natural language into safe, auditable actions.**
 
 > **Status: pre-MVP — Windows-only, no stable APIs, not ready for production use.**

@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: GitHub Discussions
+    url: https://github.com/timapogorelov/local-agent-platform/discussions
+    about: Ask questions or discuss ideas before opening an issue.

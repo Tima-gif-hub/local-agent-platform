@@ -43,7 +43,7 @@ derived from it.
     "required": ["folder_path"],
     "additionalProperties": false
   },
-  "permissions": ["FsRead", "FsWrite"],
+  "permissions": [{ "FsRead": "Anywhere" }, { "FsWrite": "Anywhere" }],
   "risk": "Moderate",
   "examples": [
     "compress the reports folder",
@@ -62,7 +62,7 @@ Field notes:
 | `version` | Semver string. Bump when params_schema changes in a breaking way. |
 | `description` | English. This string is included verbatim in the LLM routing prompt — write it for the model, not for humans. |
 | `params_schema` | Standard JSON Schema (draft-07). Always `"type": "object"`, always `"additionalProperties": false`. Required fields listed in `"required"`. |
-| `permissions` | Subset of `["FsRead", "FsWrite", "Process", "Network", "Shell"]`. Declare the minimum needed. |
+| `permissions` | List of `Permission` values as JSON. Unit variants are strings: `"ProcessSpawn"`, `"ProcessInspect"`, `"Network"`, `"Memory"`. Filesystem variants carry a scope: `{ "FsRead": "Anywhere" }` or `{ "FsWrite": { "Within": "C:/some/dir" } }`. Declare the minimum needed — the executor may narrow `Anywhere` to the invocation's target folder at runtime. |
 | `risk` | `"Safe"` (no confirmation), `"Moderate"` (confirmation by default), `"Destructive"` (always confirmation). |
 | `examples` | Natural-language phrases a user might type to invoke this skill. Include at least one non-English example where the skill is plausibly multilingual. These feed both fuzzy matching and the LLM few-shot prompt. |
 
@@ -94,7 +94,7 @@ Create `crates/jarvis-skills/src/files/compress_folder.rs`:
 ```rust
 use async_trait::async_trait;
 use jarvis_types::{
-    Permission, RiskLevel, SkillContext, SkillError, SkillManifest, SkillOutput,
+    PathScope, Permission, RiskLevel, SkillContext, SkillError, SkillManifest, SkillOutput,
 };
 use semver::Version;
 use serde::Deserialize;
@@ -123,7 +123,10 @@ impl CompressFolderSkill {
                     "required": ["folder_path"],
                     "additionalProperties": false
                 }),
-                permissions: vec![Permission::FsRead, Permission::FsWrite],
+                permissions: vec![
+                    Permission::FsRead(PathScope::Anywhere),
+                    Permission::FsWrite(PathScope::Anywhere),
+                ],
                 risk: RiskLevel::Moderate,
                 examples: vec![
                     "compress the reports folder".to_string(),
