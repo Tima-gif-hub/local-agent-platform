@@ -9,6 +9,7 @@ repository.workspace = true
 path = "src/lib.rs"
 
 [dependencies]
+async-trait = "0.1"
 directories = "6"
 jarvis-types = { path = "../jarvis-types" }
 serde = { version = "1", features = ["derive"] }

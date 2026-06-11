@@ -11,6 +11,7 @@ path = "src/lib.rs"
 [dependencies]
 async-trait = "0.1"
 image = "0.25"
+jarvis-store = { path = "../jarvis-store" }
 jarvis-types = { path = "../jarvis-types" }
 serde_json = "1"
 strsim = "0.11"
@@ -24,3 +25,6 @@ winreg = "0.55"
 [dev-dependencies]
 tempfile = "3"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+jarvis-llm = { path = "../jarvis-llm", features = ["mock"] }
+jarvis-router = { path = "../jarvis-router" }
+semver = "1"

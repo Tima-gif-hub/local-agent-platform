@@ -47,7 +47,7 @@ pub enum RouteSource {
 }
 
 /// Risk level declared by a skill.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
 pub enum RiskLevel {
     /// Runs without user confirmation.
     Safe,
@@ -491,6 +491,24 @@ mod tests {
 
         assert!(matches!(error, SkillError::PermissionDenied));
         assert!(!denied_file.exists());
+    }
+
+    #[test]
+    fn rejects_read_outside_path_scope() {
+        let allowed = tempfile::tempdir().expect("allowed dir");
+        let denied = tempfile::tempdir().expect("denied dir");
+        let denied_file = denied.path().join("outside.txt");
+        fs::write(&denied_file, "nope").expect("write denied file");
+        let ctx = SkillContext::new(
+            vec![Permission::FsRead(PathScope::Within(
+                allowed.path().to_path_buf(),
+            ))],
+            Arc::new(AlwaysConfirm(true)),
+        );
+
+        let error = ctx.fs_read(&denied_file).expect_err("outside scope");
+
+        assert!(matches!(error, SkillError::PermissionDenied));
     }
 
     #[test]

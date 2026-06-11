@@ -2221,9 +2221,18 @@ checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
 name = "jarvis"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
+ "jarvis-llm",
+ "jarvis-router",
+ "jarvis-skills",
+ "jarvis-store",
+ "jarvis-types",
+ "serde",
+ "serde_json",
  "tauri",
  "tauri-build",
  "tauri-plugin-global-shortcut",
+ "tokio",
 ]
 
 [[package]]
@@ -2261,7 +2270,11 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "image",
+ "jarvis-llm",
+ "jarvis-router",
+ "jarvis-store",
  "jarvis-types",
+ "semver",
  "serde_json",
  "strsim",
  "sysinfo",
@@ -2276,6 +2289,7 @@ dependencies = [
 name = "jarvis-store"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "directories",
  "jarvis-types",
  "serde",

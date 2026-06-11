@@ -2,8 +2,9 @@
 
 use std::{fmt, path::PathBuf, str::FromStr};
 
+use async_trait::async_trait;
 use directories::BaseDirs;
-use jarvis_types::{RiskLevel, RouteSource};
+use jarvis_types::{MemoryPort, RiskLevel, RouteSource, SkillError};
 use serde_json::Value;
 use sqlx::{
     sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions},
@@ -109,6 +110,24 @@ impl Store {
     /// Returns the conversations repository.
     pub fn conversations(&self) -> Conversations {
         Conversations::new(self.pool.clone())
+    }
+}
+
+#[async_trait]
+impl MemoryPort for Store {
+    async fn remember(&self, key: String, value: String) -> Result<(), SkillError> {
+        self.memory_facts()
+            .upsert(&key, &value, "memory.remember")
+            .await
+            .map_err(|error| SkillError::Execution(error.to_string()))
+    }
+
+    async fn recall(&self, key: String) -> Result<Option<String>, SkillError> {
+        self.memory_facts()
+            .get(&key)
+            .await
+            .map(|fact| fact.map(|fact| fact.value))
+            .map_err(|error| SkillError::Execution(error.to_string()))
     }
 }
 

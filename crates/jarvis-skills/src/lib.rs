@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use jarvis_types::Skill;
 
+pub mod executor;
 pub mod files;
 pub mod memory;
 pub mod system;
@@ -274,5 +275,77 @@ mod tests {
             .await
             .expect("recall");
         assert_eq!(output.data["value"], "C:/dev");
+    }
+
+    #[tokio::test]
+    async fn real_manifests_route_canonical_utterances() {
+        use jarvis_llm::MockLlm;
+        use jarvis_router::{RouteResult, Router};
+        use jarvis_types::RouteSource;
+
+        let catalog = builtin_skills()
+            .into_iter()
+            .map(|skill| skill.manifest().clone())
+            .collect::<Vec<_>>();
+        let llm = MockLlm::new(vec![]);
+        let cases = [
+            ("open chrome", RouteSource::Rule, "system.open_app"),
+            ("open notepad", RouteSource::Rule, "system.open_app"),
+            ("open folder C:/dev", RouteSource::Rule, "files.open_folder"),
+            ("search *.rs in C:/dev", RouteSource::Rule, "files.search"),
+            (
+                "convert png to jpg in C:/pics",
+                RouteSource::Rule,
+                "files.convert_images",
+            ),
+            (
+                "open https://example.com",
+                RouteSource::Rule,
+                "web.open_url",
+            ),
+            (
+                "remember project.root=C:/dev",
+                RouteSource::Rule,
+                "memory.remember",
+            ),
+            ("recall project.root", RouteSource::Rule, "memory.recall"),
+            ("system info", RouteSource::Fuzzy, "system.info"),
+            ("top processes", RouteSource::Fuzzy, "system.processes"),
+            ("открой хром", RouteSource::Rule, "system.open_app"),
+            ("открой vscode", RouteSource::Rule, "system.open_app"),
+            (
+                "открой папку C:/dev",
+                RouteSource::Rule,
+                "files.open_folder",
+            ),
+            ("найди *.png в D:/pics", RouteSource::Rule, "files.search"),
+            (
+                "конвертируй png в webp в D:/pics",
+                RouteSource::Rule,
+                "files.convert_images",
+            ),
+            (
+                "открой https://example.com",
+                RouteSource::Rule,
+                "web.open_url",
+            ),
+            (
+                "запомни user.name=Tim",
+                RouteSource::Rule,
+                "memory.remember",
+            ),
+            ("вспомни user.name", RouteSource::Rule, "memory.recall"),
+            ("информация о системе", RouteSource::Fuzzy, "system.info"),
+            ("процессы", RouteSource::Fuzzy, "system.processes"),
+        ];
+
+        for (text, source, skill_id) in cases {
+            let result = Router::route(text, &catalog, &llm).await.expect("route");
+            let RouteResult::Plan(plan) = result else {
+                panic!("expected plan for {text}");
+            };
+            assert_eq!(plan.source, source, "{text}");
+            assert_eq!(plan.steps[0].skill_id, skill_id, "{text}");
+        }
     }
 }
