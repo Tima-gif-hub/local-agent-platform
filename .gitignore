@@ -1,0 +1,24 @@
+# --- Internal / not for the public repo ---
+# Planning, agent task specs, AI-session instructions. Never commit these.
+internal/
+tasks/
+CLAUDE.md
+.claude/
+
+# --- Rust ---
+target/
+
+# --- Node ---
+node_modules/
+dist/
+
+# --- Tauri ---
+app/src-tauri/gen/
+
+# --- Local data / secrets ---
+*.db
+.env
+.env.*
+*.log
+.DS_Store
+Thumbs.db
