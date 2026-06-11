@@ -1,0 +1,15 @@
+{
+  "id": "system.info",
+  "version": "0.1.0",
+  "description": "Show CPU, memory, and disk information.",
+  "params_schema": {
+    "type": "object",
+    "properties": {},
+    "required": [],
+    "additionalProperties": false
+  },
+  "permissions": ["ProcessInspect"],
+  "risk": "Safe",
+  "examples": ["system info", "show system info", "computer status", "информация о системе"],
+  "triggers": []
+}

@@ -1,0 +1,21 @@
+{
+  "id": "memory.remember",
+  "version": "0.1.0",
+  "description": "Remember a key-value fact.",
+  "params_schema": {
+    "type": "object",
+    "properties": {
+      "key": { "type": "string", "minLength": 1 },
+      "value": { "type": "string" }
+    },
+    "required": ["key", "value"],
+    "additionalProperties": false
+  },
+  "permissions": ["Memory"],
+  "risk": "Safe",
+  "examples": ["remember project.root=C:/dev", "remember my editor is VS Code", "save preference theme=dark", "запомни user.name=Tim"],
+  "triggers": [
+    { "pattern": "(?i)^remember (?P<key>[^=]+)=(?P<value>.+)$" },
+    { "pattern": "(?i)^запомни (?P<key>[^=]+)=(?P<value>.+)$" }
+  ]
+}

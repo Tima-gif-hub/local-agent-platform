@@ -7,3 +7,16 @@ repository.workspace = true
 
 [lib]
 path = "src/lib.rs"
+
+[dependencies]
+jarvis-llm = { path = "../jarvis-llm" }
+jarvis-types = { path = "../jarvis-types" }
+regex = "1"
+serde_json = "1"
+strsim = "0.11"
+thiserror = "2"
+
+[dev-dependencies]
+jarvis-llm = { path = "../jarvis-llm", features = ["mock"] }
+semver = "1"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }

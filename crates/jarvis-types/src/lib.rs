@@ -100,6 +100,16 @@ pub struct SkillManifest {
     pub risk: RiskLevel,
     /// Few-shot examples used by the router.
     pub examples: Vec<String>,
+    /// Optional regex triggers with named capture groups for routing.
+    #[serde(default)]
+    pub triggers: Vec<Trigger>,
+}
+
+/// Regex trigger used by the router.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct Trigger {
+    /// Regex pattern with optional named capture groups.
+    pub pattern: String,
 }
 
 impl SkillManifest {
@@ -155,6 +165,22 @@ pub trait Confirmer: Send + Sync {
     async fn confirm(&self, prompt: String) -> bool;
 }
 
+/// Process spawning port used by skills.
+pub trait Spawner: Send + Sync {
+    /// Spawns a program with arguments.
+    fn spawn(&self, program: &str, args: &[String]) -> Result<(), SkillError>;
+}
+
+/// Memory access port used by memory skills.
+#[async_trait]
+pub trait MemoryPort: Send + Sync {
+    /// Stores a key-value memory fact.
+    async fn remember(&self, key: String, value: String) -> Result<(), SkillError>;
+
+    /// Recalls a memory fact by key.
+    async fn recall(&self, key: String) -> Result<Option<String>, SkillError>;
+}
+
 /// Runtime context passed to skills.
 #[derive(Clone)]
 pub struct SkillContext {
@@ -162,19 +188,53 @@ pub struct SkillContext {
     pub granted: Vec<Permission>,
     /// Confirmation channel for moderate or destructive operations.
     pub confirmer: Arc<dyn Confirmer>,
+    /// Process spawning port.
+    pub spawner: Arc<dyn Spawner>,
+    /// Optional memory access port.
+    pub memory: Option<Arc<dyn MemoryPort>>,
 }
 
 impl SkillContext {
     /// Creates a new skill context.
     pub fn new(granted: Vec<Permission>, confirmer: Arc<dyn Confirmer>) -> Self {
-        Self { granted, confirmer }
+        Self {
+            granted,
+            confirmer,
+            spawner: Arc::new(SystemSpawner),
+            memory: None,
+        }
+    }
+
+    /// Creates a new skill context with an injected spawner.
+    pub fn with_spawner(
+        granted: Vec<Permission>,
+        confirmer: Arc<dyn Confirmer>,
+        spawner: Arc<dyn Spawner>,
+    ) -> Self {
+        Self {
+            granted,
+            confirmer,
+            spawner,
+            memory: None,
+        }
+    }
+
+    /// Adds a memory port to the context.
+    pub fn with_memory(mut self, memory: Arc<dyn MemoryPort>) -> Self {
+        self.memory = Some(memory);
+        self
     }
 
     /// Reads a file after checking `Permission::FsRead`.
     pub fn fs_read(&self, path: impl AsRef<Path>) -> Result<Vec<u8>, SkillError> {
         let path = path.as_ref();
-        self.ensure_path_permission(path, PermissionKind::Read)?;
+        self.check_fs_read(path)?;
         fs::read(path).map_err(|error| SkillError::Execution(error.to_string()))
+    }
+
+    /// Checks whether a path is allowed by `Permission::FsRead`.
+    pub fn check_fs_read(&self, path: impl AsRef<Path>) -> Result<(), SkillError> {
+        self.ensure_path_permission(path.as_ref(), PermissionKind::Read)
     }
 
     /// Writes a file after checking `Permission::FsWrite`.
@@ -184,8 +244,13 @@ impl SkillContext {
         contents: impl AsRef<[u8]>,
     ) -> Result<(), SkillError> {
         let path = path.as_ref();
-        self.ensure_path_permission(path, PermissionKind::Write)?;
+        self.check_fs_write(path)?;
         fs::write(path, contents).map_err(|error| SkillError::Execution(error.to_string()))
+    }
+
+    /// Checks whether a path is allowed by `Permission::FsWrite`.
+    pub fn check_fs_write(&self, path: impl AsRef<Path>) -> Result<(), SkillError> {
+        self.ensure_path_permission(path.as_ref(), PermissionKind::Write)
     }
 
     /// Spawns a process after checking `Permission::ProcessSpawn`.
@@ -201,6 +266,19 @@ impl SkillContext {
         command
             .spawn()
             .map_err(|error| SkillError::Execution(error.to_string()))
+    }
+
+    /// Spawns a process through the configured spawner after checking permission.
+    pub fn spawn_program(&self, program: &str, args: &[String]) -> Result<(), SkillError> {
+        if !self
+            .granted
+            .iter()
+            .any(|permission| matches!(permission, Permission::ProcessSpawn))
+        {
+            return Err(SkillError::PermissionDenied);
+        }
+
+        self.spawner.spawn(program, args)
     }
 
     /// Requests user confirmation through the configured confirmer.
@@ -227,6 +305,18 @@ impl SkillContext {
         } else {
             Err(SkillError::PermissionDenied)
         }
+    }
+}
+
+struct SystemSpawner;
+
+impl Spawner for SystemSpawner {
+    fn spawn(&self, program: &str, args: &[String]) -> Result<(), SkillError> {
+        Command::new(program)
+            .args(args)
+            .spawn()
+            .map(|_| ())
+            .map_err(|error| SkillError::Execution(error.to_string()))
     }
 }
 

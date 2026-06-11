@@ -1,0 +1,22 @@
+{
+  "id": "files.search",
+  "version": "0.1.0",
+  "description": "Search files by name pattern under a root folder.",
+  "params_schema": {
+    "type": "object",
+    "properties": {
+      "root": { "type": "string", "minLength": 1 },
+      "pattern": { "type": "string", "minLength": 1 }
+    },
+    "required": ["root", "pattern"],
+    "additionalProperties": false
+  },
+  "permissions": [{ "FsRead": "Anywhere" }],
+  "risk": "Safe",
+  "examples": ["search *.rs in C:/dev", "find invoices in Documents", "search files", "найди *.png в картинках"],
+  "triggers": [
+    { "pattern": "(?i)^search (?P<pattern>.+) in (?P<root>.+)$" },
+    { "pattern": "(?i)^find (?P<pattern>.+) in (?P<root>.+)$" },
+    { "pattern": "(?i)^найди (?P<pattern>.+) в (?P<root>.+)$" }
+  ]
+}

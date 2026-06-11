@@ -1,0 +1,20 @@
+{
+  "id": "files.open_folder",
+  "version": "0.1.0",
+  "description": "Open a folder in the file manager.",
+  "params_schema": {
+    "type": "object",
+    "properties": {
+      "path": { "type": "string", "minLength": 1 }
+    },
+    "required": ["path"],
+    "additionalProperties": false
+  },
+  "permissions": ["ProcessSpawn"],
+  "risk": "Safe",
+  "examples": ["open folder Downloads", "open C:/dev", "show folder ~/Desktop", "открой папку загрузки"],
+  "triggers": [
+    { "pattern": "(?i)^open folder (?P<path>.+)$" },
+    { "pattern": "(?i)^открой папку (?P<path>.+)$" }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "id": "system.open_app",
+  "version": "0.1.0",
+  "description": "Open an installed application by name.",
+  "params_schema": {
+    "type": "object",
+    "properties": {
+      "name": { "type": "string", "minLength": 1 }
+    },
+    "required": ["name"],
+    "additionalProperties": false
+  },
+  "permissions": ["ProcessSpawn"],
+  "risk": "Safe",
+  "examples": ["open chrome", "open vs code", "launch notepad", "открой хром"],
+  "triggers": [
+    { "pattern": "(?i)^open (?P<name>.+)$" },
+    { "pattern": "(?i)^launch (?P<name>.+)$" },
+    { "pattern": "(?i)^открой (?P<name>.+)$" }
+  ]
+}

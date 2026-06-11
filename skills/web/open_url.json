@@ -1,0 +1,21 @@
+{
+  "id": "web.open_url",
+  "version": "0.1.0",
+  "description": "Open an HTTP or HTTPS URL in the default browser.",
+  "params_schema": {
+    "type": "object",
+    "properties": {
+      "url": { "type": "string", "pattern": "^https?://.+" }
+    },
+    "required": ["url"],
+    "additionalProperties": false
+  },
+  "permissions": ["ProcessSpawn"],
+  "risk": "Safe",
+  "examples": ["open https://example.com", "go to https://github.com", "open url", "открой https://example.com"],
+  "triggers": [
+    { "pattern": "(?i)^open (?P<url>https?://.+)$" },
+    { "pattern": "(?i)^go to (?P<url>https?://.+)$" },
+    { "pattern": "(?i)^открой (?P<url>https?://.+)$" }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": "files.convert_images",
+  "version": "0.1.0",
+  "description": "Convert images in a folder without deleting originals.",
+  "params_schema": {
+    "type": "object",
+    "properties": {
+      "folder": { "type": "string", "minLength": 1 },
+      "from": { "type": "string", "enum": ["png", "jpg", "jpeg", "webp"] },
+      "to": { "type": "string", "enum": ["png", "jpg", "jpeg", "webp"] }
+    },
+    "required": ["folder", "from", "to"],
+    "additionalProperties": false
+  },
+  "permissions": [{ "FsRead": "Anywhere" }, { "FsWrite": "Anywhere" }],
+  "risk": "Moderate",
+  "examples": ["convert png to jpg in C:/pics", "convert jpg to webp in this folder", "make png files webp", "конвертируй png в jpg в папке"],
+  "triggers": [
+    { "pattern": "(?i)^convert (?P<from>png|jpg|jpeg|webp) to (?P<to>png|jpg|jpeg|webp) in (?P<folder>.+)$" },
+    { "pattern": "(?i)^конвертируй (?P<from>png|jpg|jpeg|webp) в (?P<to>png|jpg|jpeg|webp) в (?P<folder>.+)$" }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "id": "system.processes",
+  "version": "0.1.0",
+  "description": "Show top processes by CPU and memory.",
+  "params_schema": {
+    "type": "object",
+    "properties": {},
+    "required": [],
+    "additionalProperties": false
+  },
+  "permissions": ["ProcessInspect"],
+  "risk": "Safe",
+  "examples": ["show processes", "top processes", "what is using memory", "процессы"],
+  "triggers": []
+}
