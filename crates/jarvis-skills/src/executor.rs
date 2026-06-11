@@ -145,7 +145,12 @@ impl Executor {
 
         let ctx = self.context();
         if manifest.risk >= self.config.confirm_threshold {
-            let prompt = format!("Run {} with params {}?", manifest.id, invocation.params);
+            let prompt = json!({
+                "skill_id": manifest.id,
+                "params": invocation.params,
+                "risk": manifest.risk,
+            })
+            .to_string();
             if let Err(error) = ctx.request_confirmation(prompt).await {
                 self.audit(
                     &invocation,
@@ -478,18 +483,18 @@ mod tests {
         use jarvis_llm::MockLlm;
         use jarvis_router::{RouteResult, Router};
 
-        let skills = crate::builtin_skills();
-        let catalog = skills
+        let tempdir = tempfile::tempdir().expect("tempdir");
+        std::fs::write(tempdir.path().join("main.rs"), "fn main() {}").expect("rs");
+        image::RgbImage::new(1, 1)
+            .save(tempdir.path().join("image.png"))
+            .expect("png");
+
+        let skills = real_manifest_noop_skills();
+        let catalog = crate::builtin_skills()
             .iter()
             .map(|skill| skill.manifest().clone())
             .collect::<Vec<_>>();
         let llm = MockLlm::new(vec![]);
-        let RouteResult::Plan(plan) = Router::route("remember project.root=C:/dev", &catalog, &llm)
-            .await
-            .expect("route")
-        else {
-            panic!("expected plan");
-        };
         let store = Store::open_url("sqlite::memory:").await.expect("store");
         let executor = Executor::new(
             skills,
@@ -499,17 +504,50 @@ mod tests {
             Some(Arc::new(TestMemory::default())),
             ExecutorConfig::default(),
         );
+        let folder = tempdir.path().display().to_string();
+        let cases = [
+            "open chrome".to_string(),
+            "open notepad".to_string(),
+            format!("open folder {folder}"),
+            format!("search *.rs in {folder}"),
+            format!("convert png to jpg in {folder}"),
+            "open https://example.com".to_string(),
+            "remember project.root=C:/dev".to_string(),
+            "recall project.root".to_string(),
+            "system info".to_string(),
+            "top processes".to_string(),
+            "открой хром".to_string(),
+            "открой vscode".to_string(),
+            format!("открой папку {folder}"),
+            format!("найди *.png в {folder}"),
+            format!("конвертируй png в webp в {folder}"),
+            "открой https://example.com".to_string(),
+            "запомни user.name=Tim".to_string(),
+            "вспомни user.name".to_string(),
+            "информация о системе".to_string(),
+            "процессы".to_string(),
+        ];
 
-        let report = executor.run(plan).await;
+        for text in cases {
+            let RouteResult::Plan(plan) = Router::route(&text, &catalog, &llm)
+                .await
+                .unwrap_or_else(|_| panic!("route failed for {text}"))
+            else {
+                panic!("expected plan for {text}");
+            };
 
-        assert!(report.success);
+            let report = executor.run(plan).await;
+
+            assert!(report.success, "{text}: {report:?}");
+        }
+
         let rows = store
             .audit()
-            .list(AuditFilter::default(), 10, 0)
+            .list(AuditFilter::default(), 30, 0)
             .await
             .expect("audit");
-        assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0].outcome, AuditOutcome::Success);
+        assert_eq!(rows.len(), 20);
+        assert!(rows.iter().all(|row| row.outcome == AuditOutcome::Success));
     }
 
     struct TestSkill {
@@ -567,5 +605,17 @@ mod tests {
                 })
             }
         }
+    }
+
+    fn real_manifest_noop_skills() -> Vec<Arc<dyn Skill>> {
+        crate::builtin_skills()
+            .into_iter()
+            .map(|skill| {
+                Arc::new(TestSkill {
+                    manifest: skill.manifest().clone(),
+                    fail: false,
+                }) as Arc<dyn Skill>
+            })
+            .collect()
     }
 }

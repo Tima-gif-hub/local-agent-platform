@@ -1,14 +1,20 @@
 :root {
-  color: #f5f7fb;
-  background: #111318;
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
+  --bg: #161618;
+  --bg-raised: #1F1F23;
+  --bg-input: #232329;
+  --border: #2E2E34;
+  --text: #E8E8EA;
+  --text-dim: #8A8A93;
+  --accent: #6E9FFF;
+  --risk-safe: #4CAF7D;
+  --risk-moderate: #E5B567;
+  --risk-destructive: #E5677A;
+  --radius: 10px;
+  --radius-sm: 6px;
+  color: var(--text);
+  background: var(--bg);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 14px;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -17,52 +23,443 @@
   box-sizing: border-box;
 }
 
-body {
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
   margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
+  overflow: hidden;
+  background: var(--bg);
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
-.shell {
-  display: grid;
-  min-height: 100vh;
-  place-items: center;
-  padding: 32px;
-  background:
-    radial-gradient(circle at 20% 0%, rgba(54, 94, 193, 0.24), transparent 30%),
-    linear-gradient(135deg, #111318 0%, #20242c 100%);
+button,
+select,
+input {
+  color: var(--text);
 }
 
-.inputWrap {
-  display: grid;
-  width: min(100%, 560px);
+button:focus-visible,
+select:focus-visible,
+input:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+code,
+pre,
+.params {
+  font-family: Consolas, ui-monospace, monospace;
+  font-size: 12.5px;
+}
+
+.shell {
+  position: relative;
+  width: 720px;
+  height: 480px;
+  padding: 16px;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.inputRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 44px;
+}
+
+.inputRow input {
+  width: 100%;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0 40px 0 12px;
+  color: var(--text);
+  background: var(--bg-input);
+}
+
+.inputRow input::placeholder {
+  color: var(--text-dim);
+}
+
+.statusDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--text-dim);
+  flex: 0 0 auto;
+}
+
+.inputRow .statusDot {
+  position: absolute;
+  right: 16px;
+}
+
+.statusDot.available {
+  background: var(--risk-safe);
+}
+
+.statusDot.model_missing {
+  background: var(--risk-moderate);
+}
+
+.statusDot.down {
+  background: var(--risk-destructive);
+}
+
+.offlineBanner {
+  height: 24px;
+  padding: 4px 8px;
+  margin-top: 8px;
+  border: 1px solid color-mix(in srgb, var(--risk-moderate) 55%, transparent);
+  border-radius: var(--radius-sm);
+  color: var(--risk-moderate);
+  background: color-mix(in srgb, var(--risk-moderate) 12%, transparent);
+  font-size: 13px;
+}
+
+.feed,
+.panel {
+  height: calc(100% - 52px);
+  margin-top: 8px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 24px;
+}
+
+.offlineBanner + .feed,
+.offlineBanner + .panel {
+  height: calc(100% - 84px);
+}
+
+.userLine {
+  min-height: 32px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--text);
+}
+
+.userLine span,
+.empty,
+summary span,
+.statusLine,
+details summary {
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.card {
+  min-height: 72px;
+  margin-top: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
 }
 
-.inputWrap span {
-  color: #aeb7c8;
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1,
+h2 {
   font-size: 14px;
   font-weight: 600;
-  letter-spacing: 0;
 }
 
-.inputWrap input {
-  width: 100%;
-  min-height: 56px;
-  border: 1px solid #3b4353;
-  border-radius: 8px;
-  outline: none;
-  padding: 0 18px;
-  color: #f5f7fb;
-  background: rgba(18, 21, 28, 0.94);
-  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.28);
+p {
+  color: var(--text-dim);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
-.inputWrap input:focus {
-  border-color: #7da2ff;
+.badge {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.risk-safe {
+  color: var(--risk-safe);
+  background: color-mix(in srgb, var(--risk-safe) 15%, transparent);
+}
+
+.risk-moderate {
+  color: var(--risk-moderate);
+  background: color-mix(in srgb, var(--risk-moderate) 15%, transparent);
+}
+
+.risk-destructive {
+  color: var(--risk-destructive);
+  background: color-mix(in srgb, var(--risk-destructive) 15%, transparent);
+}
+
+.params {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0 0;
+  color: var(--text);
+}
+
+.params div {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px;
+}
+
+.params dt,
+.params dd {
+  margin: 0;
+  min-width: 0;
+}
+
+.params dt {
+  color: var(--text-dim);
+}
+
+.params dd {
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.actions.split {
+  justify-content: space-between;
+}
+
+button {
+  min-height: 32px;
+  border-radius: var(--radius-sm);
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition:
+    opacity 120ms ease-out,
+    transform 120ms ease-out;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+.primary {
+  border-color: var(--accent);
+  color: #101014;
+  background: var(--accent);
+}
+
+.secondary,
+.ghost {
+  color: var(--text);
+  background: transparent;
+}
+
+.ghost {
+  border-color: transparent;
+  color: var(--text-dim);
+}
+
+.result.failed {
+  border-left: 2px solid var(--risk-destructive);
+}
+
+.errorText {
+  margin-top: 8px;
+  color: var(--risk-destructive);
+}
+
+details {
+  margin-top: 8px;
+}
+
+summary {
+  cursor: pointer;
+}
+
+pre {
+  max-width: 100%;
+  margin: 8px 0 0;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  color: var(--text);
+  background: var(--bg-input);
+}
+
+.historyRows {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.historyRow {
+  margin: 0;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.historyRow summary {
+  display: grid;
+  grid-template-columns: 160px 1fr max-content;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel {
+  max-width: 480px;
+}
+
+.settingsPanel {
+  display: grid;
+  gap: 12px;
+}
+
+label,
+fieldset {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+select {
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+}
+
+.check,
+.radioLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+}
+
+.statusLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gear {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  width: 24px;
+  min-height: 24px;
+  padding: 0;
+  border-color: transparent;
+  color: var(--text-dim);
+  background: transparent;
+}
+
+.modal {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.modalCard {
+  position: relative;
+  width: min(440px, calc(100% - 32px));
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  overflow: hidden;
+}
+
+.countdown,
+.progress span {
+  display: block;
+  height: 2px;
+  transform-origin: left;
+  background: var(--accent);
+}
+
+.countdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.onboarding {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(480px, calc(100% - 32px));
+  transform: translate(-50%, -50%);
+  display: grid;
+  gap: 12px;
+}
+
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--border);
+}
+
+.dots .active {
+  background: var(--accent);
+}
+
+.progress {
+  height: 2px;
+  overflow: hidden;
+  background: var(--border);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button {
+    transition: none;
+  }
+
+  button:hover {
+    transform: none;
+  }
 }

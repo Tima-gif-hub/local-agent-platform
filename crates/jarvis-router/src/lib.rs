@@ -133,29 +133,58 @@ async fn route_by_llm(text: &str, catalog: &[SkillManifest], llm: &dyn LlmClient
         Ok(response) => response,
         Err(_) => return RouteResult::Clarify("Could you rephrase that request?".to_string()),
     };
+    let result = parse_llm_route_response(response, catalog);
+    match result {
+        Ok(route) => route,
+        Err(validation_error) => {
+            let retry_user = format!(
+                "{text}\n\nYour previous routing response was invalid: {validation_error}. Return one valid JSON object only."
+            );
+            match llm.complete_json(&system, &retry_user, &schema).await {
+                Ok(response) => parse_llm_route_response(response, catalog).unwrap_or_else(|_| {
+                    RouteResult::Clarify("I need more details before running that.".to_string())
+                }),
+                Err(_) => RouteResult::Clarify("Could you rephrase that request?".to_string()),
+            }
+        }
+    }
+}
 
+fn parse_llm_route_response(
+    response: Value,
+    catalog: &[SkillManifest],
+) -> Result<RouteResult, String> {
     if let Some(question) = response.get("clarify").and_then(Value::as_str) {
-        return RouteResult::Clarify(question.to_string());
+        return Ok(RouteResult::Clarify(question.to_string()));
     }
 
     let Some(skill_id) = response.get("skill_id").and_then(Value::as_str) else {
-        return RouteResult::Clarify("Which skill should handle that?".to_string());
+        return Err("missing skill_id".to_string());
     };
     let Some(manifest) = catalog.iter().find(|manifest| manifest.id == skill_id) else {
-        return RouteResult::Clarify("I do not know that skill yet.".to_string());
+        return Err(format!("unknown skill_id: {skill_id}"));
     };
     let params = response.get("params").cloned().unwrap_or_else(|| json!({}));
 
-    if validate_params(manifest, &params).is_err() {
-        return RouteResult::Clarify("I need more details before running that.".to_string());
+    if let Err(error) = validate_params(manifest, &params) {
+        return Err(error.to_string());
     }
 
-    RouteResult::Plan(plan(manifest.id.clone(), params, RouteSource::Llm, 0.72))
+    Ok(RouteResult::Plan(plan(
+        manifest.id.clone(),
+        params,
+        RouteSource::Llm,
+        0.72,
+    )))
 }
 
 fn build_system_prompt(catalog: &[SkillManifest]) -> String {
     let mut prompt = String::from(
-        "Route the user request. Reply only with {\"skill_id\":...,\"params\":{...}} or {\"clarify\":\"question\"}.\n",
+        "You are Jarvis' intent router. Respond with a single JSON object and no prose.\n\
+         Use {\"skill_id\":\"category.name\",\"params\":{...}} when a listed skill fits, or {\"clarify\":\"short question\"} when required information is missing.\n\
+         Never invent skill ids. Never use numeric ids. Params must contain ONLY properties from the skill schema; use {} when the skill takes none.\n\
+         Worked example: user='open chrome' -> {\"skill_id\":\"system.open_app\",\"params\":{\"name\":\"chrome\"}}.\n\n\
+         Skill catalog:\n",
     );
     for (index, manifest) in catalog.iter().enumerate() {
         let examples = manifest
@@ -166,15 +195,37 @@ fn build_system_prompt(catalog: &[SkillManifest]) -> String {
             .collect::<Vec<_>>()
             .join("; ");
         prompt.push_str(&format!(
-            "{}. {}: {} schema={} examples={}\n",
+            "{}. id={} description={} params={} examples={}\n",
             index + 1,
             manifest.id,
             manifest.description,
-            manifest.params_schema,
+            params_summary(manifest),
             examples
         ));
     }
     prompt
+}
+
+fn params_summary(manifest: &SkillManifest) -> String {
+    let required = manifest
+        .params_schema
+        .get("required")
+        .and_then(Value::as_array)
+        .map(|values| {
+            values
+                .iter()
+                .filter_map(Value::as_str)
+                .collect::<Vec<_>>()
+                .join(", ")
+        })
+        .unwrap_or_default();
+    let properties = manifest
+        .params_schema
+        .get("properties")
+        .and_then(Value::as_object)
+        .map(|object| object.keys().cloned().collect::<Vec<_>>().join(", "))
+        .unwrap_or_default();
+    format!("properties=[{properties}] required=[{required}]")
 }
 
 fn captures_to_params(regex: &Regex, captures: &regex::Captures<'_>) -> Value {
